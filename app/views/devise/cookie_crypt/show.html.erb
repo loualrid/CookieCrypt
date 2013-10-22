@@ -1,0 +1,51 @@
+
+<h2>Two Factor Login Page</h2>
+
+<%=form_tag([resource_name, :cookie_crypt], method: :put) do %>
+  <% if @user.security_question_one.blank? %>
+    <h2>You have not yet setup two-factor questions and answers. Please follow the instructions below.</h2>
+
+    <h2>Note: It is a generally a good idea to have your questions be about people/events/objects that do not change over time.</h2>
+
+    <h3>Please input your first security question</h3>
+
+    <%=text_field_tag :security_question_one, nil, size: 50 %>
+    <br></br>
+
+    <h3>Please input your first question's answer</h3>
+
+    <%=text_field_tag :security_answer_one, nil, size: 50 %>
+    <br></br>
+
+    <h3>Please input your second security question </h3>
+
+    <%=text_field_tag :security_question_two, nil, size: 50 %>
+    <br></br>
+
+    <h3>Please input your second question's answer</h3>
+
+    <%=text_field_tag :security_answer_two, nil, size: 50 %>
+    <br></br>
+    
+    <h2>Please note that you will not be given a security token to login by skipping two factor until you login next time.</h2>
+
+  <% else %>
+
+    <h2><%="#{@user.security_question_one}"%></h2>
+
+    <%=text_field_tag :security_answer_one, nil, size: 50 %>
+
+    <br></br>
+
+    <h2><%="#{@user.security_question_two}" %></h2>
+
+    <%=text_field_tag :security_answer_two, nil, size: 50 %>
+
+    <br></br>
+  <% end %>
+
+  <%= submit_tag "Submit" %>
+
+<% end %>
+<br></br>
+<%=link_to "Sign out", destroy_user_session_path, :method => :delete %>

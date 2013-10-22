@@ -1,0 +1,4 @@
+en:
+  devise:
+    cookie_crypt:
+      attempt_failed: "Attempt failed."
