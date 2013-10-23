@@ -31,9 +31,10 @@ In order to add encrypted cookie two factor authorization to a model, run the co
 Where MODEL is your model name (e.g. User or Admin). This generator will add `:cookie_cryptable` to your model
 and create a migration in `db/migrate/`, which will add the required columns to your table.
 
-NOTE: This will create a field called "username" on the table it is creating if that field does not already exist.
-      The fields are security_question_one, security_question_two, security_answer_one, security_answer_two,
-      agent_list, and cookie_crypt_attempts_count
+NOTES
+This will create a field called "username" on the table it is creating if that field does not already exist.
+The fields are security_question_one, security_question_two, security_answer_one, security_answer_two,
+agent_list, and cookie_crypt_attempts_count.
 
 Finally, run the migration with:
 
@@ -104,9 +105,9 @@ decent enough amount of data for fingerprinting. More could be done in this rega
 of this gem and would make it more difficult for the gem to be only a minor inconvienence to the users. 
 
 What cookie crypt doesnt prevent:
-  An attacker that knows a user's username and password thats logging in from the user's machine / browser
-  An attacker that knows a user's username and password thats also spoofing the user's agent and also has the user's same auth-cookie
-  An attacker that knows a user's username, password, security questions and answers to said questions
+An attacker that knows a user's username and password thats logging in from the user's machine / browser.
+An attacker that knows a user's username and password thats also spoofing the user's agent and also has the user's same auth-cookie.
+An attacker that knows a user's username, password, security questions and answers to said questions.
 
 Afterword: Spoofing a user agent is not that difficult, any modern browser with dev tools can change its user agent rather easily. The catch is that the values
 need to match with what the user already has which requires additional work on the attacker's part. Also, The system recognizes updates to both the user's OS AND 

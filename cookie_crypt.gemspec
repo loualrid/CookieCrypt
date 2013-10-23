@@ -28,4 +28,5 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'useragent'
 
   s.add_development_dependency 'bundler'
+  s.license = 'MIT'
 end
