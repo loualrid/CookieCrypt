@@ -5,9 +5,8 @@
 ## Features
 
 * User customizable security questions and answers
-* Configurable max login attempts
+* Configurable max login attempts & cookie expiration time
 * Per user level of control (Allow certain ips to bypass two-factor)
-* Customizable views
 
 ## Configuration
 
@@ -31,11 +30,15 @@ In order to add encrypted cookie two factor authorization to a model, run the co
 Where MODEL is your model name (e.g. User or Admin). This generator will add `:cookie_cryptable` to your model
 and create a migration in `db/migrate/`, which will add the required columns to your table.
 
-NOTE
+### NOTE!
 
 This will create a field called "username" on the table it is creating if that field does not already exist.
 The fields are security_question_one, security_question_two, security_answer_one, security_answer_two,
 agent_list, and cookie_crypt_attempts_count.
+
+Having rails generate the files will also create views in the app/views/devise/cookie_crypt directory so you can
+style your two-factor pages. If you like the default look of the views, feel free to delete these files and the gem
+will serve the default ones.
 
 Finally, run the migration with:
 
@@ -58,7 +61,7 @@ Config setup
   config.cookie_deletion_time_frame = '30.days.from_now'
 ```
 
-### Customisation
+### Customization
 
 By default encrypted cookie two factor authentication is enabled for each user, you can change it with this method in your User model:
 
@@ -68,7 +71,9 @@ By default encrypted cookie two factor authentication is enabled for each user, 
   end
 ```
 
-This will disable two factor authentication for local users and just puts the code in the logs.
+This will disable two factor authentication for local users and just put the code in the logs.
+
+It is recommended to take a look at the source for the views, they are not complex but the default ones may not suit your design.
 
 ### Rationalle
 
@@ -81,23 +86,23 @@ After inputting this information they are authenticated and redirected to the ro
 It is important to note that the security answers are not saved as plaintext in the database. They are encrypted and that output is matched against
 whatever the user inputs for their answers in the future.
 
-When the user attempts to login again, they will be displayed their two security questions and asked to answer them with their two security answers.
+When the user attempts to login again, they will be shown their two security questions and asked to answer them with their two security answers.
 If successful, an auth cookie is generated on the user's machine based on the user's username and encrypted password. The cookie is username - application
-specific. No two cookies should ever be the same if the username field is unique. After receiving their auth cookie, the user's user agent is logged and
-they are sent to the root of the system as fully authenticated. If the user was unsuccessful in authenticating 3 (or more) times, they will be locked out
-until their cookie_crypt_attempts_count is reset to 0.
+specific. No two cookies from different users should ever be the same if the username field is unique. After receiving their auth cookie, the user's user 
+agent is logged and they are sent to the root of the system as fully authenticated. If the user was unsuccessful in authenticating 3 (or more) times, they
+will be locked out until their cookie_crypt_attempts_count is reset to 0.
 
-### Two factor Defense
+### Two Factor Defense
 
 So a user now has an auth cookie and the server knows it gave an auth cookie to this user that possessed this user agent, what now? If that same user with
 that same agent tries to login again, they will authenticate through cookie crypt auth without any work on their part. The server simply matches the value 
 of their cookie with what it expects it should be. If they match AND the user agent the user is using is in the list of agents allocated to that user,
-everything is square and they are authenticated. Using the UserAgent gem, incremental updates in a user's user agent will not be treated as differing agents.
+everything is square and they are authenticated. Using the [UserAgent](https://github.com/josh/useragent) gem, incremental updates in a user's user agent will not be treated as differing agents.
 The system will log the attempt as successful and update the user's agent_list with the updated agent value.
 
 But what if they're logging in through a different machine / browser? Then they input their security answers and are given a cookie for that agent.
 
-But what if an attacker knows the user's username and password? The attacker must also know the user's security question answers to auth as the user.
+But what if an attacker knows the user's username and password? The attacker must also know the user's security answers to auth as the user.
 
 But what if an attacker knows the user's username and password AND has a copy of the user's cookie in their browser? Cookie crypt detects this case and
 locks out the attacker by referencing the agent_list. A user that has a cookie but not a validated agent is obviously an attacker. This case also creates a
@@ -107,9 +112,9 @@ of this gem and would make it more difficult for the gem to be only a minor inco
 
 What cookie crypt doesnt prevent:
 
-An attacker that knows a user's username and password thats logging in from the user's machine / browser.
-An attacker that knows a user's username and password thats also spoofing the user's agent and also has the user's same auth-cookie.
-An attacker that knows a user's username, password, security questions and answers to said questions.
+* An attacker that knows a user's username and password thats logging in from the user's machine / browser.
+* An attacker that knows a user's username and password thats also spoofing the user's agent and also has the user's same auth-cookie.
+* An attacker that knows a user's username, password, security questions and answers to said questions.
 
 Afterword: Spoofing a user agent is not that difficult, any modern browser with dev tools can change its user agent rather easily. The catch is that the values
 need to match with what the user already has which requires additional work on the attacker's part. Also, The system recognizes updates to both the user's OS AND 

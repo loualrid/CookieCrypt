@@ -12,8 +12,8 @@ Gem::Specification.new do |s|
   s.description = <<-EOF
     ### Features ###
     * User customizable security questions and answers
-    * Configurable max login attempts
-    * per user level control if he really need two factor authentication
+    * Configurable max login attempts & cookie expiration time
+    * Per user level of control (Allow certain ips to bypass two-factor)
   EOF
 
   s.rubyforge_project = "cookie_crypt"
