@@ -58,7 +58,7 @@ This process will move your data (in a dev environment) from the old system to t
 
 Assuming all files are already on the production box, run
 
-    bundle exec rake db:migrate:up
+    bundle exec rake db:migrate VERSION=(version of the FIRST migration)
 
 To go forward only to the next migration, then run
 
@@ -67,7 +67,7 @@ To go forward only to the next migration, then run
 On your model to export the security question and answer data to security_hash (nothing else will be added though it may notify you of conflicts).
 Do not overwrite the conflicting migration file. Then run
 
-    bundle exec rake db:migrate:up
+    bundle exec rake db:migrate
 
 Again to remove the old fields.
 
