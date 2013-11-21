@@ -29,4 +29,19 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency 'bundler'
   s.license = 'MIT'
+  s.post_install_message = <<END_DESC
+
+  ********************************************
+
+  A major revision was made with the 1.1 update for CookieCrypt.
+
+  You will need to run 'bundle exec rails g cookie_crypt MODEL' again
+
+  to start the upgrade process from 1.0 to 1.1.
+
+  For more information check the homepage at 'https://github.com/loualrid/CookieCrypt'
+
+  ********************************************
+
+END_DESC
 end

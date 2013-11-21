@@ -2,46 +2,84 @@
 <h2>Two Factor Login Page</h2>
 
 <%=form_tag([resource_name, :cookie_crypt], method: :put) do %>
-  <% if @user.security_question_one.blank? %>
+  <% security_hash = Hash.class_eval(@user.security_hash) %>
+  <% if security_hash.empty? %>
     <h2>You have not yet setup two-factor questions and answers. Please follow the instructions below.</h2>
 
     <h2>Note: It is a generally a good idea to have your questions be about people/events/objects that do not change over time.</h2>
 
-    <h3>Please input your first security question</h3>
+    <% (1..@user.class.cookie_crypt_minimum_questions).each do |n| %>
+      <h3>Please input a security question</h3>
 
-    <%=text_field_tag :security_question_one, nil, size: 50 %>
-    <br></br>
+      <%=text_field_tag "security_question_#{n}", nil, size: 50, name: "security[security_question_#{n}]" %>
+      <br></br>
 
-    <h3>Please input your first question's answer</h3>
+      <h3>Please input a security answer</h3>
 
-    <%=text_field_tag :security_answer_one, nil, size: 50 %>
-    <br></br>
+      <%=text_field_tag "security_answer_#{n}", nil, size: 50, name: "security[security_answer_#{n}]" %>
+      <br></br>
 
-    <h3>Please input your second security question </h3>
-
-    <%=text_field_tag :security_question_two, nil, size: 50 %>
-    <br></br>
-
-    <h3>Please input your second question's answer</h3>
-
-    <%=text_field_tag :security_answer_two, nil, size: 50 %>
-    <br></br>
+    <% end %>
     
+    <% if @user.class.enable_custom_question_counts %>
+      <div id="cookie_crypt_additions_binder"></div>
+      <%= link_to "Add more security questions and answers?", "#{request.fullpath}", remote: true %>
+      <br></br>
+    <% end %>
+
     <h2>Please note that you will not be given a security token to login by skipping two factor until you login next time.</h2>
 
+  <% elsif (security_hash.keys.count/2) < @user.class.cookie_crypt_minimum_questions %>
+    <h2>There has been a change with the system that requires you to input more security questions and answers. Please follow the instructions below.</h2>
+
+    <h3 class="centered">Your current questions are
+
+    <% h = Hash.class_eval(@user.security_hash) %>
+    <% h.keys.delete_if{|x| x.include?("answer")}.each do |key| %>
+
+      <h3><%="#{h[key]}"%></h2>
+
+    <% end %>
+    <br></br>
+
+    <% (1..@user.class.cookie_crypt_minimum_questions).each do |n| %>
+
+      <% next if security_hash["security_question_#{n}"] %>
+
+      <h3>Please input a security question</h3>
+
+      <%=text_field_tag "security_question_#{n}", nil, size: 50, name: "security[security_question_#{n}]" %>
+      <br></br>
+
+      <h3>Please input a security answer</h3>
+
+      <%=text_field_tag "security_answer_#{n}", nil, size: 50, name: "security[security_answer_#{n}]" %>
+      <br></br>
+
+    <% end %>
+
+    <% if @user.class.enable_custom_question_counts %>
+      <div id="cookie_crypt_additions_binder"></div>
+      <%= link_to "Add more security questions and answers?", "#{request.fullpath}", remote: true %>
+      <br></br>
+    <% end %>
+
+    <h2>You will be authenticated for this session but not for your next login. You will need to enter your security answers next time.</h2>
+    <br></br>
   <% else %>
 
-    <h2><%="#{@user.security_question_one}"%></h2>
+    <% h = Hash.class_eval(@user.security_hash) %>
 
-    <%=text_field_tag :security_answer_one, nil, size: 50 %>
+    <% @questions.each do |q| %>
 
-    <br></br>
+      <h2><%="#{q}"%></h2>
 
-    <h2><%="#{@user.security_question_two}" %></h2>
+      <%=text_field_tag h.key(q).gsub('question','answer'), nil, size: 50, name: "security_answers[#{h.key(q).gsub('question','answer')}]" %>
 
-    <%=text_field_tag :security_answer_two, nil, size: 50 %>
+      <br></br>
 
-    <br></br>
+    <% end %>
+
   <% end %>
 
   <%= submit_tag "Submit" %>

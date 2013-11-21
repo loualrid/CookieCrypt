@@ -1,0 +1,14 @@
+<div id="security_binder_<%= session[:cookie_crypt_questions_count]%>">
+  <h3>Please input a security question</h3>
+
+  <%=text_field_tag "security_question_#{session[:cookie_crypt_questions_count]}", nil, size: 50, name: "security[security_question_#{session[:cookie_crypt_questions_count]}]" %>
+  <br></br>
+
+  <h3>Please input a security answer</h3>
+
+  <%=text_field_tag "security_answer_#{session[:cookie_crypt_questions_count]}", nil, size: 50, name: "security[security_answer_#{session[:cookie_crypt_questions_count]}]" %>
+  <br></br>
+
+  <%= link_to "Remove this question / answer pair?", "#{request.fullpath}?remove=#{session[:cookie_crypt_questions_count]}", remote: true %>
+  <br></br>
+</div>

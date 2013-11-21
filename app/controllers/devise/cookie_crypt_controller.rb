@@ -4,6 +4,7 @@ require "logger"
 class Devise::CookieCryptController < DeviseController
   prepend_before_filter :authenticate_scope!
   before_filter :prepare_and_validate, :handle_cookie_crypt
+  before_filter :set_questions, :if => :show_request
 
   def show
     if has_matching_encrypted_cookie?
@@ -30,19 +31,36 @@ class Devise::CookieCryptController < DeviseController
   end
 
   def update
-    if resource.security_question_one.blank? # initial case (first login)
+    h = Hash.class_eval(resource.security_hash)
+    if h.empty? # initial case (first login)
 
-      resource.security_question_one = sanitize(params[:security_question_one])
-      resource.security_question_two = sanitize(params[:security_question_two])
-      resource.security_answer_one   = Digest::SHA512.hexdigest(sanitize(params[:security_answer_one]))
-      resource.security_answer_two   = Digest::SHA512.hexdigest(sanitize(params[:security_answer_two]))
+      (1..(params[:security].keys.count/2)).each do |n|
+        h["security_question_#{n}"] = sanitize(params[:security]["security_question_#{n}".to_sym])
+        h["security_answer_#{n}"] = Digest::SHA512.hexdigest(sanitize(params[:security]["security_answer_#{n}".to_sym]))
+      end
+
+      resource.security_hash = h.to_s
+
+      resource.save
+
+      authentication_success
+    elsif (h.keys.count/2) < resource.class.cookie_crypt_minimum_questions # Need to update hash from an old install
+
+      ((h.keys.count/2)+1..(params[:security].keys.count/2)+((h.keys.count/2))).each do |n|
+        h["security_question_#{n}"] = sanitize(params[:security]["security_question_#{n}".to_sym])
+        h["security_answer_#{n}"] = Digest::SHA512.hexdigest(sanitize(params[:security]["security_answer_#{n}".to_sym]))
+      end
+
+      resource.security_hash = h.to_s
+
       resource.save
 
       authentication_success
     else
       
-      if matching_answers?
+      if matching_answers?(h)
         generate_cookie
+        update_resource_cycle(h)
         log_agent_to_resource
         authentication_success
       else
@@ -50,6 +68,7 @@ class Devise::CookieCryptController < DeviseController
         resource.save
         set_flash_message :error, :attempt_failed
         if resource.max_cookie_crypt_login_attempts?
+          update_resource_cycle(h)
           sign_out(resource)
           render template: 'devise/cookie_crypt/max_login_attempts_reached' and return
         else
@@ -65,38 +84,6 @@ class Devise::CookieCryptController < DeviseController
       self.resource = send("current_#{resource_name}")
     end
 
-    def encrypted_username_and_pass
-      Digest::SHA512.hexdigest("#{resource.username}_#{resource.encrypted_password}")
-    end
-
-    def generate_cookie
-      cookies["#{resource.username}_#{Rails.application.class.to_s.split("::").first}".to_sym] = {
-        value: "#{encrypted_username_and_pass}",
-        expires: Date.class_eval("#{resource.class.cookie_deletion_time_frame}")
-      }
-    end
-
-    def has_matching_encrypted_cookie?
-      cookies["#{resource.username}_#{Rails.application.class.to_s.split("::").first}"] == encrypted_username_and_pass
-    end
-
-    def log_hack_attempt
-      logger = Logger.new("#{Rails.root.join('log','hack_attempts.log')}")
-      logger.warn "Attempt to bypass two factor authentication and devise detected from ip #{request.remote_ip} using #{resource_name}: #{resource.inspect}!"
-    end
-
-    def log_agent_to_resource
-      unless using_an_agent_that_is_already_being_used?
-        resource.agent_list = "#{resource.agent_list}#{'|' unless resource.agent_list.blank?}#{request.user_agent}"
-        resource.save
-      end
-    end
-
-    def matching_answers?
-      resource.security_answer_one == Digest::SHA512.hexdigest(sanitize(params[:security_answer_one])) &&
-        resource.security_answer_two == Digest::SHA512.hexdigest(sanitize(params[:security_answer_two]))
-    end
-
     def prepare_and_validate
       redirect_to :root and return if resource.nil?
       @limit = resource.class.max_cookie_crypt_login_attempts
@@ -106,37 +93,66 @@ class Devise::CookieCryptController < DeviseController
       end
     end
 
-    def authentication_success
-      flash[:notice] = 'Signed in through two-factor authentication successfully.'
-      warden.session(resource_name)[:need_cookie_crypt_auth] = false
-      sign_in resource_name, resource, :bypass => true
-      resource.update_attribute(:cookie_crypt_attempts_count, 0)
-      redirect_to stored_location_for(resource_name) || :root
-    end
+    def set_questions # Options are: :one_question_cyclical, :one_question_random, :two_questions_cyclical, :two_questions_random, :all_questions
+      h = Hash.class_eval(resource.security_hash)
+      @questions = []
+      unless h.empty?
+        if resource.class.cookie_crypt_auth_through == :one_question_cyclical
+          set_cyclicial_cyclemod(h)
+        elsif resource.class.cookie_crypt_auth_through == :one_question_random
+          set_random_cyclemod
+        elsif resource.class.cookie_crypt_auth_through == :two_questions_cyclical
+          set_cyclicial_cyclemod(h)
 
-    def using_an_agent_that_is_already_being_used?
-      unless resource.agent_list.blank?
-        request_agent = UserAgent.parse("#{request.user_agent}")
-        resource.agent_list.split('|').each do |agent_string|
-          if agent_string.include?("#{request_agent.application}")
-            agent = UserAgent.parse("#{agent_string}")
-            if agent.application == request_agent.application && agent.browser == request_agent.browser
-              if request_agent >= agent #version number is higher for example
-                #update user agent string and return true
-                resource.agent_list = resource.agent_list.gsub("#{agent.browser}/#{agent.version}","#{request_agent.browser}/#{request_agent.version}")
-                resource.save
-                return true
-              elsif request_agent.version == agent.version
-                return true
-              end
+          if session[:cyclemod]+resource.security_cycle+1 <= h.keys.count/2
+            next_question_mod = session[:cyclemod]+1
+          else
+            next_question_mod = 0
+          end
+
+          @questions << h["security_question_#{next_question_mod}"]
+        elsif resource.class.cookie_crypt_auth_through == :two_questions_random
+          if resource.cookie_crypt_attempts_count == 0
+            session[:cyclemod] = Random.rand(0..(h.keys.count/2))
+            r = Random.rand(0..(h.keys.count/2))
+            while session[:cyclemod] != r && resource.security_cycle != r
+              r = Random.rand(0..(h.keys.count/2))
             end
+            session[:cyclemod2] = r
+          elsif resource.cookie_crypt_attempts_count != 0 && resource.cookie_crypt_attempts_count%resource.class.cycle_question_on_fail_count == 0 
+            r = Random.rand(0..(h.keys.count/2))
+            while session[:cyclemod] != r && resource.security_cycle != r
+              r = Random.rand(0..(h.keys.count/2))
+            end
+            session[:cyclemod] = r
+
+            r = Random.rand(0..(h.keys.count/2))
+            while session[:cyclemod] != r && resource.security_cycle != r
+              r = Random.rand(0..(h.keys.count/2))
+            end
+            session[:cyclemod2] = r
+          end
+
+          @questions << h["security_question_#{session[:cyclemod2]}"]
+        else #:all_questions case
+          h.keys.delete_if{|x| x.include?("answer")}.each do |key|
+            @questions << h[key]
+          end
+        end
+
+
+        unless resource.class.cookie_crypt_auth_through == :all_questions
+          if resource.class.cookie_crypt_auth_through == :one_question_cyclical || 
+            resource.class.cookie_crypt_auth_through == :two_questions_cyclical
+            @questions << h["security_question_#{resource.security_cycle+session[:cyclemod]}"]
+          else #random cyclemod case
+            @questions << h["security_question_#{session[:cyclemod]}"]
           end
         end
       end
-      false
     end
 
-    def unrecognized_agent?
-      resource.agent_list.include?("#{request.user_agent}")
+    def show_request
+      action_name == "show"
     end
 end

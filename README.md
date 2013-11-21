@@ -6,6 +6,7 @@
 
 * User customizable security questions and answers
 * Configurable max login attempts & cookie expiration time
+* Configurable authentication styles
 * Per user level of control (Allow certain ips to bypass two-factor)
 
 ## Configuration
@@ -33,33 +34,42 @@ and create a migration in `db/migrate/`, which will add the required columns to 
 ### NOTE!
 
 This will create a field called "username" on the table it is creating if that field does not already exist.
-The fields are security_question_one, security_question_two, security_answer_one, security_answer_two,
-agent_list, and cookie_crypt_attempts_count.
+The fields are security_hash, security_cycle, agent_list, and cookie_crypt_attempts_count.
 
 Having rails generate the files will also create views in the app/views/devise/cookie_crypt directory so you can
 style your two-factor pages. If you like the default look of the views, feel free to delete these files and the gem
 will serve the default ones.
 
-Finally, run the migration with:
+Run the migration with:
 
     bundle exec rake db:migrate
 
+With the 1.1 update, more steps are required. After following the above steps or upgrading from a previous version, run the command:
 
-### Manual installation
+    bundle exec rails g cookie_crypt MODEL
 
-To manually enable encrypted cookie two factor authentication for the User model, you should add cookie_crypt to your devise line, like:
+On your model again to generate the 1.1 cleanup and migration files. After doing this run
 
-```ruby
-  devise :database_authenticatable, :registerable,
-         :recoverable, :rememberable, :trackable, :validatable, :cookie_cryptable
-```
+    bundle exec rake db:migrate
 
-Config setup
+This process will move your data (in a dev environment) from the old system to the new system.
 
-```ruby
-  config.max_login_attempts = 3
-  config.cookie_deletion_time_frame = '30.days.from_now'
-```
+### Production Updating from 1.0 to 1.1
+
+Assuming all files are already on the production box, run
+
+    bundle exec rake db:migrate:up
+
+To go forward only to the next migration, then run
+
+    bundle exec rails g cookie_crypt MODEL
+
+On your model to export the security question and answer data to security_hash (nothing else will be added though it may notify you of conflicts).
+Do not overwrite the conflicting migration file. Then run
+
+    bundle exec rake db:migrate:up
+
+Again to remove the old fields.
 
 ### Customization
 
@@ -119,3 +129,33 @@ What cookie crypt doesnt prevent:
 Afterword: Spoofing a user agent is not that difficult, any modern browser with dev tools can change its user agent rather easily. The catch is that the values
 need to match with what the user already has which requires additional work on the attacker's part. Also, The system recognizes updates to both the user's OS AND 
 browser.
+
+
+### Whats new with the 1.1 Update
+* Reworked security questions and answers to allow for more customization options
+* cookie_crypt_auth_through
+** :one_question_cyclical
+*** The default
+*** Each user must answer only one of their questions at the end of a cookie cycle to authenticate.
+*** The questions are chosen cyclically, the user will not answer the same question the next time they have to auth through two-factor
+*** This prevents users logging in on a new machine from always being shown the same questions and is more secure
+** :one_question_random
+*** The user is shown a random question that was not their previous question every time they auth through two-factor, otherwise exactly like cyclical
+** :two_questions_cyclical
+*** Exactly like one_question_cyclical except two questions must be answered every auth
+** :two_questions_random
+*** Exactly like one_question_random except two questions must be answered every auth
+** :all_questions
+*** This option is not advised, but is available. It is the old functionality the system had.
+*** The user must answer all authentication questions every auth session
+* cookie_crypt_minimum_questions
+** Default is 3
+** Minimum number of questions and answers the user must enter into the system on their initial attempt
+** Systems upgrading from 1.0 will prompt the user to add the difference in numbers of questions and answers
+* cycle_question_on_fail_count
+** Default is 2
+** Minimum number of failed attempts before the question(s) is(are) cycled to the next question(s)
+** Works in conjunction with max_cookie_crypt_login_attempts
+* enable_custom_question_counts
+** Default is false
+** Allows users to have more than the minimum number of security question / answer pairs.

@@ -4,9 +4,13 @@ require 'digest'
 require 'active_support/concern'
 
 module Devise
-  mattr_accessor :max_cookie_crypt_login_attempts, :cookie_deletion_time_frame
+  mattr_accessor :max_cookie_crypt_login_attempts, :cookie_deletion_time_frame, :cookie_crypt_auth_through, :cookie_crypt_minimum_questions, :cycle_question_on_fail_count, :enable_custom_question_counts
   @@max_cookie_crypt_login_attempts = 3
-  @@cookie_deletion_time_frame = 30.days.from_now
+  @@cookie_deletion_time_frame = '30.days.from_now'
+  @@cookie_crypt_auth_through = :one_question_cyclical
+  @@cookie_crypt_minimum_questions = 3
+  @@cycle_question_on_fail_count = 2
+  @@enable_custom_question_counts = false
 end
 
 module CookieCrypt

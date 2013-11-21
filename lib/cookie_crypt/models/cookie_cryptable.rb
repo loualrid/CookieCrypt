@@ -5,7 +5,7 @@ module Devise
       extend ActiveSupport::Concern
 
       module ClassMethods
-        ::Devise::Models.config(self, :max_cookie_crypt_login_attempts, :cookie_deletion_time_frame)
+        ::Devise::Models.config(self, :max_cookie_crypt_login_attempts, :cookie_deletion_time_frame, :cookie_crypt_auth_through, :cookie_crypt_minimum_questions, :cycle_question_on_fail_count, :enable_custom_question_counts)
       end
 
       def need_cookie_crypt_auth?(request)

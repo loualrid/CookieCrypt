@@ -1,0 +1,8 @@
+<% if params[:remove] %>
+  $('#security_binder_<%= params[:remove] %>').remove();
+<% else %>
+  <% session[:cookie_crypt_questions_count] ||= @user.class.cookie_crypt_minimum_questions %>
+  <% session[:cookie_crypt_questions_count] += 1 %>
+
+  $('#cookie_crypt_additions_binder').append('<%= escape_javascript(render partial: "extra_fields")%>');
+<% end %>
