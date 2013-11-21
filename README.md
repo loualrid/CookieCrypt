@@ -134,28 +134,28 @@ browser.
 ### Whats new with the 1.1 Update
 * Reworked security questions and answers to allow for more customization options
 * cookie_crypt_auth_through
-** :one_question_cyclical
-*** The default
-*** Each user must answer only one of their questions at the end of a cookie cycle to authenticate.
-*** The questions are chosen cyclically, the user will not answer the same question the next time they have to auth through two-factor
-*** This prevents users logging in on a new machine from always being shown the same questions and is more secure
-** :one_question_random
-*** The user is shown a random question that was not their previous question every time they auth through two-factor, otherwise exactly like cyclical
-** :two_questions_cyclical
-*** Exactly like one_question_cyclical except two questions must be answered every auth
-** :two_questions_random
-*** Exactly like one_question_random except two questions must be answered every auth
-** :all_questions
-*** This option is not advised, but is available. It is the old functionality the system had.
-*** The user must answer all authentication questions every auth session
+    * :one_question_cyclical
+        * The default
+        * Each user must answer only one of their questions at the end of a cookie cycle to authenticate.
+        * The questions are chosen cyclically, the user will not answer the same question the next time they have to auth through two-factor
+        * This prevents users logging in on a new machine from always being shown the same questions and is more secure
+    * :one_question_random
+        * The user is shown a random question that was not their previous question every time they auth through two-factor, otherwise exactly like cyclical
+    * :two_questions_cyclical
+        * Exactly like one_question_cyclical except two questions must be answered every auth
+    * :two_questions_random
+        * Exactly like one_question_random except two questions must be answered every auth
+    * :all_questions
+        * This option is not advised, but is available. It is the old functionality the system had.
+        * The user must answer all authentication questions every auth session
 * cookie_crypt_minimum_questions
-** Default is 3
-** Minimum number of questions and answers the user must enter into the system on their initial attempt
-** Systems upgrading from 1.0 will prompt the user to add the difference in numbers of questions and answers
+    * Default is 3
+    * Minimum number of questions and answers the user must enter into the system on their initial attempt
+    * Systems upgrading from 1.0 will prompt the user to add the difference in numbers of questions and answers
 * cycle_question_on_fail_count
-** Default is 2
-** Minimum number of failed attempts before the question(s) is(are) cycled to the next question(s)
-** Works in conjunction with max_cookie_crypt_login_attempts
+    * Default is 2
+    * Minimum number of failed attempts before the question(s) is(are) cycled to the next question(s)
+    * Works in conjunction with max_cookie_crypt_login_attempts
 * enable_custom_question_counts
-** Default is false
-** Allows users to have more than the minimum number of security question / answer pairs.
+    * Default is false
+    * Allows users to have more than the minimum number of security question / answer pairs.

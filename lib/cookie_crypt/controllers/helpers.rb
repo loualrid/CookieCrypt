@@ -74,9 +74,10 @@ module CookieCrypt
         unless resource.class.cookie_crypt_auth_through == :all_questions
           if resource.class.cookie_crypt_auth_through == :one_question_cyclical || 
             resource.class.cookie_crypt_auth_through == :two_questions_cyclical
-            answers << h["security_answer_#{resource.security_cycle+session[:cyclemod]}"]
+
+            answers << "security_answer_#{resource.security_cycle+session[:cyclemod]}"
           else #random cyclemod case
-            answers << h["security_answer_#{session[:cyclemod]}"]
+            answers << "security_answer_#{session[:cyclemod]}"
           end
         end
 
@@ -106,7 +107,7 @@ module CookieCrypt
           end
         end
 
-        authed = true unless q_arr.include?(false)
+        authed = true unless a_arr.include?(false)
         authed
       end
 

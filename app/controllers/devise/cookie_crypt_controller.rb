@@ -47,10 +47,11 @@ class Devise::CookieCryptController < DeviseController
     elsif (h.keys.count/2) < resource.class.cookie_crypt_minimum_questions # Need to update hash from an old install
 
       ((h.keys.count/2)+1..(params[:security].keys.count/2)+((h.keys.count/2))).each do |n|
+        puts "TESTING::#{n}"
         h["security_question_#{n}"] = sanitize(params[:security]["security_question_#{n}".to_sym])
         h["security_answer_#{n}"] = Digest::SHA512.hexdigest(sanitize(params[:security]["security_answer_#{n}".to_sym]))
       end
-
+      puts "TESTING2::#{h}"
       resource.security_hash = h.to_s
 
       resource.save
