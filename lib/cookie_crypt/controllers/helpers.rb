@@ -131,7 +131,7 @@ module CookieCrypt
           session[:cyclemod] = Random.rand(1..(hash.keys.count/2))
         elsif resource.cookie_crypt_attempts_count != 0 && resource.cookie_crypt_attempts_count%resource.class.cycle_question_on_fail_count == 0 
           r = Random.rand(1..(hash.keys.count/2))
-          while session[:cyclemod] != r && resource.security_cycle != r
+          while session[:cyclemod] == r || resource.security_cycle == r
             r = Random.rand(1..(hash.keys.count/2))
           end
           session[:cyclemod] = r

@@ -114,7 +114,7 @@ class Devise::CookieCryptController < DeviseController
           if resource.cookie_crypt_attempts_count == 0
             session[:cyclemod] ||= Random.rand(1..(h.keys.count/2))
             r = Random.rand(1..(h.keys.count/2))
-            while session[:cyclemod] != r && resource.security_cycle != r
+            while session[:cyclemod] == r || resource.security_cycle == r
               r = Random.rand(1..(h.keys.count/2))
             end
             session[:cyclemod2] ||= r
@@ -126,13 +126,13 @@ class Devise::CookieCryptController < DeviseController
 
             if session[:cookie_tick] == 1
               r = Random.rand(1..(h.keys.count/2))
-              while session[:cyclemod] != r && resource.security_cycle != r
+              while session[:cyclemod] == r || resource.security_cycle == r
                 r = Random.rand(1..(h.keys.count/2))
               end
               session[:cyclemod] = r
 
               r = Random.rand(1..(h.keys.count/2))
-              while session[:cyclemod] != r && resource.security_cycle != r
+              while session[:cyclemod] == r || resource.security_cycle == r
                 r = Random.rand(1..(h.keys.count/2))
               end
               session[:cyclemod2] = r
