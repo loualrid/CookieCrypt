@@ -71,6 +71,11 @@ module CookieCrypt
 
       def matching_answers? hash
         answers = []
+        answers_from_form = []
+        params[:security_answers].each_key do |key|
+          answers_from_form << key
+        end
+        
         unless resource.class.cookie_crypt_auth_through == :all_questions
           if resource.class.cookie_crypt_auth_through == :one_question_cyclical || 
             resource.class.cookie_crypt_auth_through == :two_questions_cyclical
@@ -83,7 +88,7 @@ module CookieCrypt
 
         if resource.class.cookie_crypt_auth_through == :two_questions_cyclical
           if session[:cyclemod]+resource.security_cycle+1 <= hash.keys.count/2
-            next_question_mod = session[:cyclemod]+1
+            next_question_mod = session[:cyclemod]+resource.security_cycle+1
           else
             next_question_mod = 0
           end
@@ -99,7 +104,7 @@ module CookieCrypt
 
         authed = false
         a_arr = []
-        answers.sort.each do |key|
+        answers.each do |key|
           if hash[key] == Digest::SHA512.hexdigest(sanitize(params[:security_answers][key]))
             a_arr[answers.index(key)] = true
           else
@@ -123,11 +128,11 @@ module CookieCrypt
 
       def set_random_cyclemod hash
         if resource.cookie_crypt_attempts_count == 0
-          session[:cyclemod] = Random.rand(0..(hash.keys.count/2))
+          session[:cyclemod] = Random.rand(1..(hash.keys.count/2))
         elsif resource.cookie_crypt_attempts_count != 0 && resource.cookie_crypt_attempts_count%resource.class.cycle_question_on_fail_count == 0 
-          r = Random.rand(0..(hash.keys.count/2))
+          r = Random.rand(1..(hash.keys.count/2))
           while session[:cyclemod] != r && resource.security_cycle != r
-            r = Random.rand(0..(hash.keys.count/2))
+            r = Random.rand(1..(hash.keys.count/2))
           end
           session[:cyclemod] = r
 
@@ -135,12 +140,20 @@ module CookieCrypt
       end
 
       def update_resource_cycle hash
-        if resource.security_cycle+1 > hash.keys.count/2
-          resource.security_cycle = 1
-        else
-          resource.security_cycle += 1
-        end
+        if resource.class.cookie_crypt_auth_through == :one_question_cyclical || 
+          resource.class.cookie_crypt_auth_through == :two_questions_cyclical
 
+          if resource.security_cycle+1 > hash.keys.count/2
+            resource.security_cycle = 1
+          else
+            resource.security_cycle += 1
+          end
+        elsif resource.class.cookie_crypt_auth_through == :one_question_random || 
+          resource.class.cookie_crypt_auth_through == :two_questions_random
+
+          resource.security_cycle = session[:cyclemod]
+        end
+        
         resource.save
       end
 

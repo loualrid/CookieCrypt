@@ -62,8 +62,6 @@ module CookieCryptable
           copy_file "_extra_fields.html.erb", "app/views/devise/cookie_crypt/_extra_fields.html.erb"
           File.delete("app/views/devise/cookie_crypt/show.html.erb")
           copy_file "show.html.erb", "app/views/devise/cookie_crypt/show.html.erb"
-
-          puts "Please run rake db:migrate then run this generator again to cleanup unused fields."
         end
       end
 
@@ -82,8 +80,6 @@ module CookieCryptable
               obj.security_hash = h.to_s
 
               obj.save
-
-              puts "#{obj.security_hash}"
             end
 
             puts "Completed data cleanup, database is now 1.1 ready."

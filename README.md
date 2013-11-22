@@ -44,7 +44,10 @@ Run the migration with:
 
     bundle exec rake db:migrate
 
-With the 1.1 update, more steps are required. After following the above steps or upgrading from a previous version, run the command:
+With the 1.1 update, more steps are required if you are upgrading from a previous install. If you are installing this gem for
+the first time, you can disregard everything up to "Customization" as the generator will only install exactly what you need.
+
+If you are upgrading from a previous version, run the command:
 
     bundle exec rails g cookie_crypt MODEL
 
@@ -56,6 +59,7 @@ This process will move your data (in a dev environment) from the old system to t
 
 ### Production Updating from 1.0 to 1.1
 
+If you do not care about your users having to redo their questions / answers when their cookie expires, you can skip this process.
 Assuming all files are already on the production box, run
 
     bundle exec rake db:migrate VERSION=(version of the FIRST migration)
@@ -73,7 +77,7 @@ Again to remove the old fields.
 
 ### Customization
 
-By default encrypted cookie two factor authentication is enabled for each user, you can change it with this method in your User model:
+By default encrypted cookie two factor authentication is enabled for each user, you can change it with this method in your User model (if thats what you chose to Cookie Crypt):
 
 ```ruby
   def need_two_factor_authentication?(request)
@@ -83,7 +87,45 @@ By default encrypted cookie two factor authentication is enabled for each user, 
 
 This will disable two factor authentication for local users and just put the code in the logs.
 
-It is recommended to take a look at the source for the views, they are not complex but the default ones may not suit your design.
+It is recommended to take a look at the source for the views, they are not overly complex but the default ones may not suit your design.
+
+You can also customize options set in config/initializers/devise.rb. The default options tend to be best practices but may not suit your needs.
+
+Question-auth refers to when a user does not have a cookie or their cookie has expired. If they have a valid cookie and user agent as described above, they will bypass
+the question-auth.
+* cookie_crypt_auth_through
+    * :one_question_cyclical
+        * The default
+        * Each user must answer only one of their questions at the end of a cookie cycle to authenticate.
+        * The questions are chosen cyclically, the user will not answer the same question the next time they have to question-auth through two-factor
+        * This prevents users logging in on a new machine from always being shown the same questions and is more secure
+    * :one_question_random
+        * The user is shown a random question that was not their previous question every time they question-auth through two-factor, otherwise exactly like cyclical
+        * The question asked in the previous question-auth will never be the next question-auth's question.
+    * :two_questions_cyclical
+        * Exactly like one_question_cyclical except two questions must be answered every question-auth
+    * :two_questions_random
+        * Exactly like one_question_random except two questions must be answered every question-auth
+        * Note: the questions will never be the same question or the FIRST question that was asked last question-auth.
+    * :all_questions
+        * This option is not advised, but is available. It is the old functionality the system had.
+        * The user must answer all authentication questions every question-auth session
+* cookie_crypt_minimum_questions
+    * Default is 3
+    * Minimum number of questions and answers the user must enter into the system on their initial attempt
+    * Systems upgrading from 1.0 will prompt the user to add the difference in numbers of questions and answers
+* cycle_question_on_fail_count
+    * Default is 2
+    * Minimum number of failed attempts before the question(s) is(are) cycled to the next question(s)
+* enable_custom_question_counts
+    * Default is false
+    * Allows users to have more than the minimum number of security question / answer pairs. It should be noted that this enables some ajax functionality on the views page.
+* max_cookie_crypt_login_attempts
+    * Default is 3
+    * The maximum number of tries a user has before they are locked out of cookie crypt and unable to fully login.
+* cookie_deletion_time_frame
+    * Default is '30.days.from.now'
+    * Must be a string that evaluates to a date in the future.
 
 ### Rationalle
 
@@ -128,36 +170,4 @@ What cookie crypt doesnt prevent:
 
 Afterword: Spoofing a user agent is not that difficult, any modern browser with dev tools can change its user agent rather easily. The catch is that the values
 need to match with what the user already has which requires additional work on the attacker's part. Also, The system recognizes updates to both the user's OS AND 
-browser.
-
-
-### Whats new with the 1.1 Update
-Question-auth refers to when a user does not have a cookie or their cookie has expired. If they have a valid cookie and user agent as described above, they will bypass
-the question-auth.
-* Reworked security questions and answers to allow for more customization options
-* cookie_crypt_auth_through
-    * :one_question_cyclical
-        * The default
-        * Each user must answer only one of their questions at the end of a cookie cycle to authenticate.
-        * The questions are chosen cyclically, the user will not answer the same question the next time they have to question-auth through two-factor
-        * This prevents users logging in on a new machine from always being shown the same questions and is more secure
-    * :one_question_random
-        * The user is shown a random question that was not their previous question every time they question-auth through two-factor, otherwise exactly like cyclical
-    * :two_questions_cyclical
-        * Exactly like one_question_cyclical except two questions must be answered every question-auth
-    * :two_questions_random
-        * Exactly like one_question_random except two questions must be answered every question-auth
-    * :all_questions
-        * This option is not advised, but is available. It is the old functionality the system had.
-        * The user must answer all authentication questions every question-auth session
-* cookie_crypt_minimum_questions
-    * Default is 3
-    * Minimum number of questions and answers the user must enter into the system on their initial attempt
-    * Systems upgrading from 1.0 will prompt the user to add the difference in numbers of questions and answers
-* cycle_question_on_fail_count
-    * Default is 2
-    * Minimum number of failed attempts before the question(s) is(are) cycled to the next question(s)
-    * Works in conjunction with max_cookie_crypt_login_attempts
-* enable_custom_question_counts
-    * Default is false
-    * Allows users to have more than the minimum number of security question / answer pairs.
+browser. It should also be noted that cookies served over https are also further encrypted, making it much more difficult for an attacker to get the user's auth-cookie.

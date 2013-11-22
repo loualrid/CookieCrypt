@@ -47,11 +47,9 @@ class Devise::CookieCryptController < DeviseController
     elsif (h.keys.count/2) < resource.class.cookie_crypt_minimum_questions # Need to update hash from an old install
 
       ((h.keys.count/2)+1..(params[:security].keys.count/2)+((h.keys.count/2))).each do |n|
-        puts "TESTING::#{n}"
         h["security_question_#{n}"] = sanitize(params[:security]["security_question_#{n}".to_sym])
         h["security_answer_#{n}"] = Digest::SHA512.hexdigest(sanitize(params[:security]["security_answer_#{n}".to_sym]))
       end
-      puts "TESTING2::#{h}"
       resource.security_hash = h.to_s
 
       resource.save
@@ -101,37 +99,46 @@ class Devise::CookieCryptController < DeviseController
         if resource.class.cookie_crypt_auth_through == :one_question_cyclical
           set_cyclicial_cyclemod(h)
         elsif resource.class.cookie_crypt_auth_through == :one_question_random
-          set_random_cyclemod
+          set_random_cyclemod(h)
         elsif resource.class.cookie_crypt_auth_through == :two_questions_cyclical
           set_cyclicial_cyclemod(h)
 
           if session[:cyclemod]+resource.security_cycle+1 <= h.keys.count/2
-            next_question_mod = session[:cyclemod]+1
+            next_question_mod = session[:cyclemod]+resource.security_cycle+1
           else
-            next_question_mod = 0
+            next_question_mod = 1
           end
 
           @questions << h["security_question_#{next_question_mod}"]
         elsif resource.class.cookie_crypt_auth_through == :two_questions_random
           if resource.cookie_crypt_attempts_count == 0
-            session[:cyclemod] = Random.rand(0..(h.keys.count/2))
-            r = Random.rand(0..(h.keys.count/2))
+            session[:cyclemod] ||= Random.rand(1..(h.keys.count/2))
+            r = Random.rand(1..(h.keys.count/2))
             while session[:cyclemod] != r && resource.security_cycle != r
-              r = Random.rand(0..(h.keys.count/2))
+              r = Random.rand(1..(h.keys.count/2))
             end
-            session[:cyclemod2] = r
-          elsif resource.cookie_crypt_attempts_count != 0 && resource.cookie_crypt_attempts_count%resource.class.cycle_question_on_fail_count == 0 
-            r = Random.rand(0..(h.keys.count/2))
-            while session[:cyclemod] != r && resource.security_cycle != r
-              r = Random.rand(0..(h.keys.count/2))
-            end
-            session[:cyclemod] = r
+            session[:cyclemod2] ||= r
+          elsif resource.cookie_crypt_attempts_count != 0 && resource.cookie_crypt_attempts_count%resource.class.cycle_question_on_fail_count == 0
+            #The tick assists pages that are running redirects to other sources while in two-factor mode. Without it, their
+            #cyclemod would desynch from the expected value on the change event (this if case) and they would be unable to auth unless the randoms matched.
+            session[:cookie_tick] ||= 0 
+            session[:cookie_tick] += 1
 
-            r = Random.rand(0..(h.keys.count/2))
-            while session[:cyclemod] != r && resource.security_cycle != r
-              r = Random.rand(0..(h.keys.count/2))
+            if session[:cookie_tick] == 1
+              r = Random.rand(1..(h.keys.count/2))
+              while session[:cyclemod] != r && resource.security_cycle != r
+                r = Random.rand(1..(h.keys.count/2))
+              end
+              session[:cyclemod] = r
+
+              r = Random.rand(1..(h.keys.count/2))
+              while session[:cyclemod] != r && resource.security_cycle != r
+                r = Random.rand(1..(h.keys.count/2))
+              end
+              session[:cyclemod2] = r
             end
-            session[:cyclemod2] = r
+          else #reset the tick
+            session[:cookie_tick] = 0
           end
 
           @questions << h["security_question_#{session[:cyclemod2]}"]
@@ -145,6 +152,7 @@ class Devise::CookieCryptController < DeviseController
         unless resource.class.cookie_crypt_auth_through == :all_questions
           if resource.class.cookie_crypt_auth_through == :one_question_cyclical || 
             resource.class.cookie_crypt_auth_through == :two_questions_cyclical
+
             @questions << h["security_question_#{resource.security_cycle+session[:cyclemod]}"]
           else #random cyclemod case
             @questions << h["security_question_#{session[:cyclemod]}"]
