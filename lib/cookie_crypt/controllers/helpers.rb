@@ -121,6 +121,8 @@ module CookieCrypt
           session[:cyclemod] = 0
         elsif resource.cookie_crypt_attempts_count != 0 && resource.cookie_crypt_attempts_count%resource.class.cycle_question_on_fail_count == 0 
           session[:cyclemod] += 1
+        else #logout then log back in at a future time?
+          session[:cyclemod] = 0
         end
 
         session[:cyclemod] = 0 if session[:cyclemod]+resource.security_cycle > hash.keys.count/2
@@ -136,10 +138,13 @@ module CookieCrypt
           end
           session[:cyclemod] = r
 
+        else #logout then log back in at a future time?
+          session[:cyclemod] = 0
         end
       end
 
       def update_resource_cycle hash
+        #reset or rollover the cycle number
         if resource.class.cookie_crypt_auth_through == :one_question_cyclical || 
           resource.class.cookie_crypt_auth_through == :two_questions_cyclical
 
