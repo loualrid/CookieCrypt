@@ -162,6 +162,6 @@ class Devise::CookieCryptController < DeviseController
     end
 
     def show_request
-      action_name == "show"
+      action_name == "show" || resource.cookie_crypt_attempts_count != 0
     end
 end
