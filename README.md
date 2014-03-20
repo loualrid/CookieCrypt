@@ -124,7 +124,7 @@ the question-auth.
     * Default is 3
     * The maximum number of tries a user has before they are locked out of cookie crypt and unable to fully login.
 * cookie_deletion_time_frame
-    * Default is '30.days.from.now'
+    * Default is '30.days.from_now'
     * Must be a string that evaluates to a date in the future.
 
 ### Rationalle
