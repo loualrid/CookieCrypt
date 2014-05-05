@@ -1,0 +1,15 @@
+<% h = Hash.class_eval(@user.security_hash) %>
+
+<h3> Are you on a public computer or a computer you most likely won't be using again? </h3>
+
+<%= link_to "Public", "#{@request_path}?bind_public_form=true", class: 'button', remote: true %>
+
+<% @questions.each do |q| %>
+
+  <h2><%="#{q}"%></h2>
+
+  <%=text_field_tag h.key(q).gsub('question','answer'), nil, size: 50, name: "security_answers[#{h.key(q).gsub('question','answer')}]" %>
+
+  <br></br>
+
+<% end %>

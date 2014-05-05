@@ -17,6 +17,7 @@ module ActiveRecord
 
       def copy_cookie_crypt_migration_1_0
         if ActiveRecord::Base.class_eval("#{table_name.camelize.singularize}.inspect['security_question_one: string'].blank?") &&
+          ActiveRecord::Base.class_eval("#{table_name.camelize.singularize}.inspect['security_hash: text'].blank?") &&
           !@ignore_other_migrations
 
           migration_template "migration.rb", "db/migrate/cookie_crypt_add_to_#{table_name}"

@@ -1,5 +1,11 @@
 <% if params[:remove] %>
   $('#security_binder_<%= params[:remove] %>').remove();
+<% elsif params[:bind_public_form] %>
+  $('#cookie_crypt_login_binder').empty();
+  $('#cookie_crypt_login_binder').append('<%= escape_javascript(render partial: "public_login_questions")%>');
+<% elsif params[:bind_private_form] %>
+  $('#cookie_crypt_login_binder').empty();
+  $('#cookie_crypt_login_binder').append('<%= escape_javascript(render partial: "private_login_questions")%>');
 <% else %>
   <% session[:cookie_crypt_questions_count] ||= @user.class.cookie_crypt_minimum_questions %>
   <% session[:cookie_crypt_questions_count] += 1 %>

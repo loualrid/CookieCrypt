@@ -1,0 +1,19 @@
+<% h = Hash.class_eval(@user.security_hash) %>
+
+<h3> Are you on a private computer or a computer will be using again? </h3>
+
+<%= link_to "Private", "#{request.fullpath}?bind_private_form=true", class: 'button', remote: true %>
+
+<% @questions.each do |q| %>
+
+  <h2><%="#{q}"%></h2>
+
+  <%= password_field_tag h.key(q).gsub('question','answer'), nil, size: 50, name: "security_answers[#{h.key(q).gsub('question','answer')}]" %>
+
+  <br></br>
+
+<% end %>
+
+<%= hidden_field_tag "do_not_save_cookie" %>
+
+<h3>After hitting submit you will only be authenticated for this session.</h3>

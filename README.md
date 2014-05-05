@@ -29,7 +29,9 @@ In order to add encrypted cookie two factor authorization to a model, run the co
     bundle exec rails g cookie_crypt MODEL
 
 Where MODEL is your model name (e.g. User or Admin). This generator will add `:cookie_cryptable` to your model
-and create a migration in `db/migrate/`, which will add the required columns to your table.
+and create a migration in `db/migrate/`, which will add the required columns to your table. It will also generate
+cookie crypt views in app/views/devise/cookie_crypt. You can delete these views if you'd rather just use the default
+ones served from the gem.
 
 ### NOTE!
 

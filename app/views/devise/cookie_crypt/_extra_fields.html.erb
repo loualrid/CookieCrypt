@@ -9,6 +9,6 @@
   <%=text_field_tag "security_answer_#{session[:cookie_crypt_questions_count]}", nil, size: 50, name: "security[security_answer_#{session[:cookie_crypt_questions_count]}]" %>
   <br></br>
 
-  <%= link_to "Remove this question / answer pair?", "#{request.fullpath}?remove=#{session[:cookie_crypt_questions_count]}", remote: true %>
+  <%= link_to "Remove this question / answer pair?", "#{@request_path}?remove=#{session[:cookie_crypt_questions_count]}", remote: true %>
   <br></br>
 </div>

@@ -23,7 +23,7 @@
     
     <% if @user.class.enable_custom_question_counts %>
       <div id="cookie_crypt_additions_binder"></div>
-      <%= link_to "Add more security questions and answers?", "#{request.fullpath}", remote: true %>
+      <%= link_to "Add more security questions and answers?", @request_path, remote: true %>
       <br></br>
     <% end %>
 
@@ -60,7 +60,7 @@
 
     <% if @user.class.enable_custom_question_counts %>
       <div id="cookie_crypt_additions_binder"></div>
-      <%= link_to "Add more security questions and answers?", "#{request.fullpath}", remote: true %>
+      <%= link_to "Add more security questions and answers?", @request_path, remote: true %>
       <br></br>
     <% end %>
 
@@ -68,17 +68,15 @@
     <br></br>
   <% else %>
 
-    <% h = Hash.class_eval(@user.security_hash) %>
+    <% #Begin 1.2 changes %>
 
-    <% @questions.each do |q| %>
+    <div id="cookie_crypt_login_binder">
 
-      <h2><%="#{q}"%></h2>
+      <%= render partial: 'private_login_questions' %>
 
-      <%=text_field_tag h.key(q).gsub('question','answer'), nil, size: 50, name: "security_answers[#{h.key(q).gsub('question','answer')}]" %>
+    </div>
 
-      <br></br>
-
-    <% end %>
+    <% #End 1.2 Changes %>
 
   <% end %>
 

@@ -6,7 +6,8 @@ module CookieCryptable
 
       #BEGIN 1.0 generator
       def inject_1_0_cookie_crypt_content
-        if ActiveRecord::Base.class_eval("#{table_name.camelize.singularize}.inspect['security_question_one: string'].blank?")
+        if ActiveRecord::Base.class_eval("#{table_name.camelize.singularize}.inspect['security_question_one: string'].blank?") &&
+          ActiveRecord::Base.class_eval("#{table_name.camelize.singularize}.inspect['security_hash: text'].blank?")
           puts "Beginning 1.0 content injection..."
           paths = [File.join("app", "models", "#{file_path}.rb"),File.join("config", "initializers", "devise.rb")]
           inject_into_file(paths[0], "cookie_cryptable, :", :after => "devise :") if File.exists?(paths[0])
@@ -20,13 +21,15 @@ module CookieCryptable
 
       source_root File.expand_path('../../../../app/views/devise/cookie_crypt', __FILE__)
 
-      def generate_1_0_files
+      def generate_1_0_view_files
         Dir.mkdir("app/views/devise") unless Dir.exists?("app/views/devise")
         unless Dir.exists?("app/views/devise/cookie_crypt")
           puts "Beginning 1.0 views creation..."
           Dir.mkdir("app/views/devise/cookie_crypt") 
           copy_file "max_login_attempts_reached.html.erb", "app/views/devise/cookie_crypt/max_login_attempts_reached.html.erb"
           copy_file "show.html.erb", "app/views/devise/cookie_crypt/show.html.erb"
+
+          $load_all_views = true
         end
       end
       
@@ -55,11 +58,13 @@ module CookieCryptable
 
       source_root File.expand_path('../../../../app/views/devise/cookie_crypt', __FILE__)
 
-      def generate_1_1_files
+      def generate_1_1_view_files
         unless File.exist?("app/views/devise/cookie_crypt/show.js.erb")
           puts "Beginning 1.1 views creation..."
           copy_file "show.js.erb", "app/views/devise/cookie_crypt/show.js.erb"
           copy_file "_extra_fields.html.erb", "app/views/devise/cookie_crypt/_extra_fields.html.erb"
+          copy_file "_private_login_questions.html.erb", "app/views/devise/cookie_crypt/_private_login_questions.html.erb"
+          copy_file "_public_login_questions.html.erb", "app/views/devise/cookie_crypt/_public_login_questions.html.erb"
           File.delete("app/views/devise/cookie_crypt/show.html.erb")
           copy_file "show.html.erb", "app/views/devise/cookie_crypt/show.html.erb"
         end
@@ -86,6 +91,46 @@ module CookieCryptable
             puts "Generating cleanup migration that will remove now unneeded security_question_one, security_answer_one, security_question_two, security_answer_two fields."
 
             $generate_1_1_cleanup_migration = true
+          end
+        end
+      end
+
+      def generate_1_2_view_files
+        $load_all_views ||= false
+        unless File.exist?("app/views/devise/cookie_crypt/_private_login_questions.html.erb")
+          unless $load_all_views
+            copy_new_files = false
+            puts "Enter O  || o  || overwrite to overwrite the view files in app/views/devise/cookie_crypt\n"
+            puts "Enter CO || co || copyover  to write new files to app/views/devise/cookie_crypt (you will need to update show.js.erb and show.html.haml yourself)\n"
+            puts "Enter N  || n  || no        to not generate anything\n"
+            puts "Input:"
+            input = STDIN.gets.chomp
+          end
+
+          if (input =~ /O|o|overwrite/) == 0
+            puts "Beginning 1.2 views creation..."
+            File.delete("app/views/devise/cookie_crypt/show.js.erb")
+            copy_file "show.js.erb", "app/views/devise/cookie_crypt/show.js.erb"
+            File.delete("app/views/devise/cookie_crypt/show.html.erb")
+            copy_file "show.html.erb", "app/views/devise/cookie_crypt/show.html.erb"
+            File.delete("app/views/devise/cookie_crypt/_extra_fields.html.erb")
+            copy_new_files = true
+          elsif (input =~ /CO|co|copyover/) == 0
+            puts "Beginning 1.2 views creation...(please update the view files yourself)"
+            copy_file "show.js.erb", "app/views/devise/cookie_crypt/(copy_into_your)show.js.erb"
+            copy_file "show.html.erb", "app/views/devise/cookie_crypt/(copy_into_your)show.html.erb"
+            copy_file "_extra_fields.html.erb", "app/views/devise/cookie_crypt/(copy_into_your)_extra_fields.html.erb"
+            copy_new_files = true
+          elsif $load_all_views
+            puts "Beginning 1.2 views creation..."
+            copy_new_files = true
+          else
+            puts "Not updating view files.\nIf you dont want to deal with the cookie_crypt views, you can delete app/views/devise/cookie_crypt and the gem will serve the data."
+          end
+
+          if copy_new_files
+            copy_file "_private_login_questions.html.erb", "app/views/devise/cookie_crypt/_private_login_questions.html.erb"
+            copy_file "_public_login_questions.html.erb", "app/views/devise/cookie_crypt/_public_login_questions.html.erb"
           end
         end
       end

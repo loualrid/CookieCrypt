@@ -26,6 +26,7 @@ class Devise::CookieCryptController < DeviseController
     else
       flash[:notice] = "Signed In Successfully, now going through two factor authentication."
       @user = resource
+      @request_path = request.fullpath.split('?').first
       render template: "devise/cookie_crypt/show"
     end
   end
@@ -55,10 +56,10 @@ class Devise::CookieCryptController < DeviseController
       resource.save
 
       authentication_success
-    else
+    else #normal login attempts
       
       if matching_answers?(h)
-        generate_cookie
+        generate_cookie unless params[:do_not_save_cookie]
         update_resource_cycle(h)
         log_agent_to_resource
         authentication_success
