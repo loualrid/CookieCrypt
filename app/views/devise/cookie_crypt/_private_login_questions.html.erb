@@ -4,6 +4,8 @@
 
 <%= link_to "Public", "#{@request_path}?bind_public_form=true", class: 'button', remote: true %>
 
+<br></br>
+
 <% @questions.each do |q| %>
 
   <h2><%="#{q}"%></h2>

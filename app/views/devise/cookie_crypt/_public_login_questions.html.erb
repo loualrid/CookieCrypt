@@ -4,6 +4,8 @@
 
 <%= link_to "Private", "#{request.fullpath}?bind_private_form=true", class: 'button', remote: true %>
 
+<br></br>
+
 <% @questions.each do |q| %>
 
   <h2><%="#{q}"%></h2>
