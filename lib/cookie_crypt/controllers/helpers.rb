@@ -12,7 +12,7 @@ module CookieCrypt
       def authentication_success
         flash[:notice] = 'Signed in through two-factor authentication successfully.'
         warden.session(resource_name)[:need_cookie_crypt_auth] = false
-        sign_in resource_name, resource, :bypass => true
+        bypass_sign_in resource
         resource.update_attribute(:cookie_crypt_attempts_count, 0)
         redirect_to stored_location_for(resource_name) || :root
       end

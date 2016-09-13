@@ -2,9 +2,9 @@ include ActionView::Helpers::SanitizeHelper
 require "useragent"
 require "logger"
 class Devise::CookieCryptController < DeviseController
-  prepend_before_filter :authenticate_scope!
-  before_filter :prepare_and_validate, :handle_cookie_crypt
-  before_filter :set_questions, :if => :show_request
+  prepend_before_action :authenticate_scope!
+  before_action :prepare_and_validate, :handle_cookie_crypt
+  before_action :set_questions, :if => :show_request
 
   def show
     if has_matching_encrypted_cookie?
@@ -57,6 +57,7 @@ class Devise::CookieCryptController < DeviseController
 
       authentication_success
     else #normal login attempts
+      puts "TESTING::#{ h }\n#{ resource.cookie_crypt_attempts_count }"
       
       if matching_answers?(h)
         generate_cookie unless params[:do_not_save_cookie]
