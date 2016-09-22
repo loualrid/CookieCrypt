@@ -4,7 +4,7 @@ module CookieCrypt
       extend ActiveSupport::Concern
 
       included do
-        before_filter :handle_cookie_crypt
+        before_action :handle_cookie_crypt
       end
 
       private
